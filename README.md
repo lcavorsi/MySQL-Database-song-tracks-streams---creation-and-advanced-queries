@@ -1,2 +1,2 @@
-# MySQL-Database-song-tracks-streams---creation-and-advanced-queries
+# MySQL-Database creation-and-advanced-queries -Songs streams
 This mock database records information about songs digital streaming 
