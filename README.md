@@ -1,2 +1,2 @@
-# MySQL-Database creation-and-advanced-queries -Songs streams
-This mock database records information about songs digital streaming 
+# MySQL - Database creation and advanced queries - Songs streams
+This mock database records information about songs, artists, and number of streams in different Countries. It also includes information about different stakeholders within the digital music publishing sector (publishers, aggregators, PROs, labels). This database is designed with the aim to calculate royalties for artists, through analysis of the data. 
