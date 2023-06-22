@@ -1,0 +1,139 @@
+EXAM MYSQL
+
+################# CREATE a VIEW ##########################
+
+CREATE VIEW Netherlands_streams
+AS
+SELECT ARTISTS_SONG.Song_ID, ARTISTS_SONG.Artist_Id, STREAMS.Stream_ID, ARTISTS.Artist_Name
+FROM ((ARTISTS_SONG
+Inner JOIN
+STREAMS
+ON ARTISTS_SONG.Song_ID = STREAMS.Song_ID)
+INNER JOIN
+ARTISTS
+ON ARTISTS.Artist_ID = ARTISTS_SONG.Artist_ID)
+WHERE STREAMS.Country_ID = '2';
+
+
+SELECT * FROM Netherlands_streams;
+
+
+################# CREATE a FUNCTION ########################
+
+USE SPOTIFY_1
+DELIMITER //
+CREATE FUNCTION Assigned_team (Artist_Percentage INT)
+RETURNS VARCHAR (10) 
+deterministic
+BEGIN
+	DECLARE team VARCHAR (10);
+    IF Artist_Percentage = 100 THEN
+    SET team = 'Junior';
+    ELSEIF Artist_Percentage < 100 THEN
+    SET team = 'Senior';
+    END IF;
+	
+    RETURN (team);
+    	
+END //
+Delimiter ;
+
+SELECT ARTIST_ID, SONG_ID, ARTIST_PERCENTAGE, Assigned_team (Artist_Percentage)
+FROM ARTISTS_SONG
+ORDER BY SONG_ID;
+
+
+
+################### SUBQUERY  ##############################
+
+SELECT Song_Id, Song_Title, Song_Genre, Release_Date
+FROM SONGS
+WHERE Release_Date> (SELECT Release_Date from SONGS WHERE SONG_Id = 'DO68V'); 
+
+
+
+
+################### CREATE A PROCEDURE ######################
+
+USE SPOTIFY_2
+DELIMITER //
+CREATE PROCEDURE sp_Streams_Label_Country (IN Label VARCHAR (20), IN Country VARCHAR (20))
+BEGIN
+	SELECT ARTISTS_SONG.Song_ID, ARTISTS_SONG.Artist_ID, ARTISTS.Artist_ISNI, ARTISTS.Artist_Name, STREAMS.Stream_ID, PROS.PRO_name, COUNTRIES.Country_Id
+    FROM ARTISTS_SONG
+    INNER JOIN ARTISTS ON ARTISTS_SONG.Artist_ID = ARTISTS.Artist_ID
+    INNER JOIN STREAMS ON ARTISTS_SONG.Song_ID = STREAMS.Song_ID
+    INNER JOIN PROs ON ARTISTS.Pro_ID = PROS.Pro_ID
+    INNER JOIN COUNTRIES ON COUNTRIES.Country_ID = STREAMS.Country_ID
+    INNER JOIN LABELS ON ARTISTS.LAbel_ID = LABELS.Label_ID
+    WHERE Label_Name = Label AND Country_Name = Country; 
+END //
+DELIMITER ;
+
+CALL sp_Streams_Label_Country ('Cat Records', 'Italy');
+
+
+
+##################### CREATE a TRIGGER  #############################
+
+DELIMITER // 
+CREATE TRIGGER Royalties_calculation
+BEFORE UPDATE ON Royalties
+FOR EACH ROW
+BEGIN
+	IF new.Monthly_streams > 0 THEN
+	SET NEW.Royalties_earned = (NEW.Monthly_streams * NEW.Stream_pay);
+	END IF;
+END//
+DELIMITER ;
+
+SET SQL_SAFE_UPDATES=0;
+UPDATE Royalties
+SET Monthly_streams = 30
+WHERE Payment_Id = 1;
+
+SELECT * FROM Royalties;
+
+
+SET SQL_SAFE_UPDATES=0;
+UPDATE Royalties
+SET Stream_Pay = 2
+WHERE Payment_Id = 1;
+
+SELECT * FROM Royalties;
+
+###################### QUERIES WITH GROUP BY AND HAVING ##########################
+
+SELECT count(s.Stream_ID), c.Country_Name, b.Artist_Name
+FROM ARTISTS_SONG as a
+Inner JOIN
+STREAMS as s
+ON a.Song_ID = s.Song_ID
+INNER JOIN
+ARTISTS as b
+ON b.Artist_ID = a.Artist_ID
+INNER JOIN COUNTRIES as c
+ON s.Country_ID= c.Country_Id
+GROUP BY c.Country_Name, b.Artist_Name
+HAVING COUNT(b.Artist_Name) > 2;
+
+
+
+SELECT count(s.Stream_ID), c.Country_Name, b.Artist_Name
+FROM ARTISTS_SONG as a
+Inner JOIN
+STREAMS as s
+ON a.Song_ID = s.Song_ID
+INNER JOIN
+ARTISTS as b
+ON b.Artist_ID = a.Artist_ID
+INNER JOIN COUNTRIES as c
+ON s.Country_ID= c.Country_Id
+INNER JOIN SONGS as x
+ON x.Song_ID= s.Song_ID
+WHERE s.stream_date BETWEEN '2023-01-01' AND '2023-05-31'
+GROUP BY c.Country_Name, b.Artist_Name
+HAVING COUNT(b.Artist_Name) > 0;
+
+
+#######################################################################
